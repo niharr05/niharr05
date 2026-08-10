@@ -20,8 +20,23 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Generate GitHub Stats SVGs
-        uses: jstrieb/github-stats@master
-        with:
+        run: |
+          curl --location --output github-stats https://github.com/jstrieb/github-stats/releases/latest/download/github-stats_x86_64-linux
+          chmod +x github-stats
+          mkdir -p generated
+          ./github-stats \
+            --overview-output-file generated/overview.svg \
+            --languages-output-file generated/languages.svg
+        env:
           ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          EXCLUDE_FORKED_REPOS: true
+          EXCLUDE_REPOS: ${{ secrets.EXCLUDE_REPOS }}
+          EXCLUDE_LANGS: ${{ secrets.EXCLUDE_LANGS }}
+          EXCLUDE_PRIVATE: "false"
+
+      - name: Commit generated stats
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add generated
+          git commit -m "chore: update generated GitHub stats [skip ci]" || true
+          git push

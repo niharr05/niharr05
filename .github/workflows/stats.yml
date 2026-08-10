@@ -1,0 +1,76 @@
+name: Generate GitHub Stats
+
+on:
+  schedule:
+    - cron: "0 */6 * * *" # Runs every 6 hours
+  workflow_dispatch: # Allows manual triggering
+  push:
+    branches:
+      - main
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # ── GitHub Readme Stats (Stats + Top Languages + Extra Stats) ──
+      - name: Generate GitHub Stats Card
+        uses: anuraghazra/github-readme-stats@master
+        with:
+          USERNAME: ${{ github.repository_owner }}
+          THEME: tokyonight
+          HIDE_BORDER: true
+          COUNT_PRIVATE: true
+          INCLUDE_ALL_COMMITS: true
+          SHOW_ICONS: true
+          CARD_WIDTH: 495
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OUTPUT_FILE: dist/stats.svg
+
+      - name: Generate Stats Cards via curl
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p dist
+
+          # GitHub Stats Card
+          curl -s "https://github-readme-stats.vercel.app/api?username=${{ github.repository_owner }}&show_icons=true&theme=tokyonight&hide_border=true&count_private=true&include_all_commits=true" -o dist/stats.svg || true
+
+          # Top Languages Card
+          curl -s "https://github-readme-stats.vercel.app/api/top-langs/?username=${{ github.repository_owner }}&layout=compact&theme=tokyonight&hide_border=true&langs_count=8" -o dist/top-langs.svg || true
+
+          # Extra Stats Card
+          curl -s "https://github-readme-stats.vercel.app/api?username=${{ github.repository_owner }}&show_icons=true&theme=tokyonight&hide_border=true&include_all_commits=true&show=reviews,prs_merged,prs_merged_percentage" -o dist/extra-stats.svg || true
+
+          # GitHub Streak
+          curl -s "https://streak-stats.demolab.com/?user=${{ github.repository_owner }}&theme=tokyonight&hide_border=true" -o dist/streak.svg || true
+
+          # GitHub Trophies
+          curl -s "https://github-profile-trophy.vercel.app/?username=${{ github.repository_owner }}&theme=algolia&no-frame=true&column=7&margin-w=15&margin-h=15" -o dist/trophies.svg || true
+
+          # Activity Graph
+          curl -s "https://github-readme-activity-graph.vercel.app/graph?username=${{ github.repository_owner }}&theme=tokyo-night&hide_border=true&area=true" -o dist/activity-graph.svg || true
+
+          # Validate files exist and are not error pages
+          for f in dist/*.svg; do
+            if [ -f "$f" ]; then
+              size=$(wc -c < "$f")
+              echo "$f: $size bytes"
+              if [ "$size" -lt 100 ]; then
+                echo "WARNING: $f seems too small, may be an error"
+              fi
+            fi
+          done
+
+      - name: Push to Output Branch
+        uses: crazy-max/ghaction-github-pages@v4
+        with:
+          target_branch: output
+          build_dir: dist
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

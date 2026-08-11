@@ -30,7 +30,7 @@ Building intelligent applications with Machine Learning and Generative AI.
 - 🌱 &nbsp;I'm currently learning **Data Science**, advanced ML, and **Generative AI**
 - 👯 &nbsp;I'm looking to collaborate on interesting **AI/ML & Data Science** projects
 - 💬 &nbsp;Ask me about **Python, Machine Learning, Flask, or Data Analysis**
-- 📫 &nbsp;Reach me at **[ramoliya.nihar05@gmail.com](mailto:ramoliya.nihar05@gmail.com)**
+- 📫 &nbsp;Reach me at **[ramoliya.nihar05@gmail.com](mailto:nihar.ramoliya05@gmail.com)**
 - 🌐 &nbsp;Check out my work on my **[Portfolio](https://niharramoliya-portfolio.netlify.app/)**
 - ⚡ &nbsp;Fun fact: I teach machines to guess grades better than I can guess my own 😅
 

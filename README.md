@@ -36,22 +36,7 @@ Building intelligent applications with Machine Learning and Generative AI.
 
 <br/>
 
-## 🏆 GitHub Trophies
-
-<p align="center">
-  <a href="https://github.com/ryo-ma/github-profile-trophy">
-    <img src="https://github-profile-trophy.vercel.app/?username=niharr05&theme=algolia&no-frame=true&column=7&margin-w=15&margin-h=15" alt="GitHub Trophies" />
-  </a>
-</p>
-
-<br/>
-
 ## 📊 GitHub Analytics
-
-<div align="center">
-  <img height="180em" src="https://raw.githubusercontent.com/niharr05/niharr05/master/generated/overview.svg" alt="GitHub Stats" />
-  <img height="180em" src="https://raw.githubusercontent.com/niharr05/niharr05/master/generated/languages.svg" alt="Top Languages" />
-</div>
 
 <div align="center">
   <img src="https://streak-stats.demolab.com/?user=niharr05&theme=tokyonight&hide_border=true" alt="GitHub Streak" />
@@ -122,14 +107,6 @@ Building intelligent applications with Machine Learning and Generative AI.
     <img src="https://skillicons.dev/icons?i=python,pytorch,tensorflow,scikitlearn,pandas,numpy,flask,react,nodejs,express,mongodb,mysql,html,css,git,figma,firebase,arduino,flutter&theme=light" alt="Skills" />
   </a>
 </p>
-
-<br/>
-
-## 📈 Extra Stats
-
-<div align="center">
-  <img src="https://raw.githubusercontent.com/niharr05/niharr05/master/generated/overview.svg" alt="Overview Stats" />
-</div>
 
 <br/>
 

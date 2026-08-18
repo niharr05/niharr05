@@ -49,6 +49,11 @@ Building intelligent applications with Machine Learning and Generative AI.
 ## 📊 GitHub Analytics
 
 <div align="center">
+  <img height="180em" src="https://raw.githubusercontent.com/niharr05/niharr05/master/generated/overview.svg" alt="GitHub Stats" />
+  <img height="180em" src="https://raw.githubusercontent.com/niharr05/niharr05/master/generated/languages.svg" alt="Top Languages" />
+</div>
+
+<div align="center">
   <img src="https://streak-stats.demolab.com/?user=niharr05&theme=tokyonight&hide_border=true" alt="GitHub Streak" />
 </div>
 

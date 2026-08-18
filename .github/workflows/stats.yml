@@ -2,7 +2,7 @@ name: Generate GitHub Stats
 
 on:
   schedule:
-    - cron: "0 */6 * * *" # Runs every 6 hours
+    - cron: "0 */12 * * *" # Runs every 12 hours
   workflow_dispatch: # Allows manual triggering
   push:
     branches:
@@ -11,7 +11,7 @@ on:
 jobs:
   generate:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     permissions:
       contents: write
 
@@ -19,9 +19,179 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Generate GitHub Stats SVGs
-        uses: jstrieb/github-stats@master
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+          node-version: '20'
+
+      - name: Generate Stats Cards
+        env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          EXCLUDE_FORKED_REPOS: true
+          USERNAME: niharr05
+        run: |
+          mkdir -p generated
+
+          # ── GitHub Stats Card ──
+          node -e "
+          const https = require('https');
+          const fs = require('fs');
+
+          const query = JSON.stringify({
+            query: \`{
+              user(login: \"${process.env.USERNAME}\") {
+                name
+                contributionsCollection {
+                  totalCommitContributions
+                  totalPullRequestContributions
+                  totalIssueContributions
+                  totalPullRequestReviewContributions
+                  contributionCalendar {
+                    totalContributions
+                  }
+                }
+                repositories(ownerAffiliations: OWNER, first: 100, orderBy: {field: STARGAZERS, direction: DESC}) {
+                  totalCount
+                  nodes {
+                    stargazerCount
+                    forkCount
+                    primaryLanguage {
+                      name
+                      color
+                    }
+                    languages(first: 10, orderBy: {field: SIZE, direction: DESC}) {
+                      edges {
+                        size
+                        node {
+                          name
+                          color
+                        }
+                      }
+                    }
+                  }
+                }
+                followers {
+                  totalCount
+                }
+              }
+            }\`
+          });
+
+          const options = {
+            hostname: 'api.github.com',
+            path: '/graphql',
+            method: 'POST',
+            headers: {
+              'Authorization': 'Bearer ' + process.env.GITHUB_TOKEN,
+              'Content-Type': 'application/json',
+              'User-Agent': 'github-stats-generator'
+            }
+          };
+
+          const req = https.request(options, (res) => {
+            let data = '';
+            res.on('data', chunk => data += chunk);
+            res.on('end', () => {
+              const result = JSON.parse(data);
+              if (result.errors) {
+                console.error('GraphQL errors:', JSON.stringify(result.errors));
+                process.exit(1);
+              }
+              const user = result.data.user;
+              const contrib = user.contributionsCollection;
+              const repos = user.repositories;
+
+              const totalStars = repos.nodes.reduce((sum, r) => sum + r.stargazerCount, 0);
+              const totalForks = repos.nodes.reduce((sum, r) => sum + r.forkCount, 0);
+              const totalContributions = contrib.contributionCalendar.totalContributions;
+              const totalCommits = contrib.totalCommitContributions;
+              const totalPRs = contrib.totalPullRequestContributions;
+              const totalIssues = contrib.totalIssueContributions;
+
+              // Generate Stats SVG
+              const statsSvg = \`<svg width=\"495\" height=\"195\" xmlns=\"http://www.w3.org/2000/svg\">
+            <style>
+              .header { font: 600 18px 'Segoe UI', Ubuntu, Sans-Serif; fill: #70a5fd; }
+              .stat { font: 600 14px 'Segoe UI', Ubuntu, Sans-Serif; fill: #bf91f3; }
+              .value { font: 700 14px 'Segoe UI', Ubuntu, Sans-Serif; fill: #38bdae; }
+              .icon { fill: #70a5fd; }
+            </style>
+            <rect x=\"0.5\" y=\"0.5\" width=\"494\" height=\"194\" rx=\"12\" fill=\"#1a1b27\" stroke=\"#1a1b27\"/>
+            <text x=\"25\" y=\"35\" class=\"header\">📊 \${user.name || process.env.USERNAME}'s GitHub Stats</text>
+            <g transform=\"translate(25, 55)\">
+              <text class=\"stat\" y=\"0\">⭐ Total Stars Earned:</text><text class=\"value\" x=\"260\" y=\"0\">\${totalStars}</text>
+              <text class=\"stat\" y=\"28\">🔀 Total Forks:</text><text class=\"value\" x=\"260\" y=\"28\">\${totalForks}</text>
+              <text class=\"stat\" y=\"56\">🔥 Total Contributions (\${new Date().getFullYear()}):</text><text class=\"value\" x=\"260\" y=\"56\">\${totalContributions}</text>
+              <text class=\"stat\" y=\"84\">📝 Total Commits:</text><text class=\"value\" x=\"260\" y=\"84\">\${totalCommits}</text>
+              <text class=\"stat\" y=\"112\">📦 Total Repos:</text><text class=\"value\" x=\"260\" y=\"112\">\${repos.totalCount}</text>
+            </g>
+          </svg>\`;
+
+              fs.writeFileSync('generated/overview.svg', statsSvg);
+              console.log('Stats SVG generated successfully');
+
+              // Generate Languages SVG
+              const langMap = {};
+              repos.nodes.forEach(repo => {
+                repo.languages.edges.forEach(edge => {
+                  if (!langMap[edge.node.name]) {
+                    langMap[edge.node.name] = { size: 0, color: edge.node.color || '#586069' };
+                  }
+                  langMap[edge.node.name].size += edge.size;
+                });
+              });
+
+              const totalSize = Object.values(langMap).reduce((sum, l) => sum + l.size, 0);
+              const sortedLangs = Object.entries(langMap)
+                .sort((a, b) => b[1].size - a[1].size)
+                .slice(0, 8);
+
+              let barX = 25;
+              const barWidth = 445;
+              const barParts = sortedLangs.map(([name, data]) => {
+                const pct = data.size / totalSize;
+                const w = Math.max(pct * barWidth, 2);
+                const part = { name, color: data.color, width: w, x: barX, pct: (pct * 100).toFixed(1) };
+                barX += w;
+                return part;
+              });
+
+              const langRows = sortedLangs.map(([name, data], i) => {
+                const pct = ((data.size / totalSize) * 100).toFixed(1);
+                const col = i % 2;
+                const row = Math.floor(i / 2);
+                const x = 25 + col * 225;
+                const y = 80 + row * 25;
+                return \`<g transform=\"translate(\${x}, \${y})\">
+                  <circle cx=\"5\" cy=\"-4\" r=\"5\" fill=\"\${data.color}\"/>
+                  <text x=\"15\" style=\"font: 400 12px 'Segoe UI', Ubuntu, Sans-Serif; fill: #adbac7;\">\${name} \${pct}%</text>
+                </g>\`;
+              }).join('\\n');
+
+              const barRects = barParts.map(p =>
+                \`<rect x=\"\${p.x}\" y=\"55\" width=\"\${p.width}\" height=\"8\" rx=\"2\" fill=\"\${p.color}\"/>\`
+              ).join('\\n');
+
+              const langHeight = 90 + Math.ceil(sortedLangs.length / 2) * 25;
+              const langsSvg = \`<svg width=\"495\" height=\"\${langHeight}\" xmlns=\"http://www.w3.org/2000/svg\">
+            <rect x=\"0.5\" y=\"0.5\" width=\"494\" height=\"\${langHeight - 1}\" rx=\"12\" fill=\"#1a1b27\" stroke=\"#1a1b27\"/>
+            <text x=\"25\" y=\"35\" style=\"font: 600 18px 'Segoe UI', Ubuntu, Sans-Serif; fill: #70a5fd;\">💻 Most Used Languages</text>
+            \${barRects}
+            \${langRows}
+          </svg>\`;
+
+              fs.writeFileSync('generated/languages.svg', langsSvg);
+              console.log('Languages SVG generated successfully');
+            });
+          });
+
+          req.on('error', (e) => { console.error(e); process.exit(1); });
+          req.write(query);
+          req.end();
+          "
+
+      - name: Commit and Push
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add generated/
+          git diff --staged --quiet || (git commit -m "chore: update stats SVGs [skip ci]" && git push)

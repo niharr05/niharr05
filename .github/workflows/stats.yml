@@ -26,7 +26,7 @@ jobs:
 
       - name: Generate Stats Cards
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.STATS_PAT }}
           USERNAME: niharr05
         run: |
           mkdir -p generated

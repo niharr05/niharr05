@@ -26,7 +26,7 @@ Building intelligent applications with Machine Learning and Generative AI.
 
 ## 👋 About Me
 
-- 🔭 &nbsp;I'm currently working on **[EduPredict-AI](https://github.com/niharr05/EduPredict-AI)** — a full-stack ML app that predicts student performance
+- 🔭 &nbsp;I'm currently working on **[codelens-ai](https://github.com/niharr05/codelens-ai.git)** — an AI-powered code review and analysis tool for GitHub Pull Requests.
 - 🌱 &nbsp;I'm currently learning **Data Science**, advanced ML, and **Generative AI**
 - 👯 &nbsp;I'm looking to collaborate on interesting **AI/ML & Data Science** projects
 - 💬 &nbsp;Ask me about **Python, Machine Learning, Flask, or Data Analysis**
